@@ -101,10 +101,20 @@ public class IndexController
 					new File(RugbyUtil.RUGBY_DIRECTORY + RugbyUtil.CONFIGURATIONS_DIRECTORY 
 					+ RugbyUtil.OUTPUT_XML));
 		} else {
-			session_configurations = new Configurations();
-			JAXBContext.newInstance(Configurations.class).createMarshaller().marshal(session_configurations, 
-					new File(RugbyUtil.RUGBY_DIRECTORY + RugbyUtil.CONFIGURATIONS_DIRECTORY + 
-					RugbyUtil.OUTPUT_XML));
+//			session_configurations = new Configurations();
+//			JAXBContext.newInstance(Configurations.class).createMarshaller().marshal(session_configurations, 
+//					new File(RugbyUtil.RUGBY_DIRECTORY + RugbyUtil.CONFIGURATIONS_DIRECTORY + 
+//					RugbyUtil.OUTPUT_XML));
+			
+			 Configurations session_configurations = new Configurations();
+	            String outputPath = RugbyUtil.RUGBY_DIRECTORY + RugbyUtil.CONFIGURATIONS_DIRECTORY + RugbyUtil.OUTPUT_XML;
+	            File outputFile = new File(outputPath);
+	            if (!outputFile.getParentFile().exists()) {
+	                outputFile.getParentFile().mkdirs();
+	                JAXBContext.newInstance(Configurations.class).createMarshaller().marshal(session_configurations, 
+	    					new File(RugbyUtil.RUGBY_DIRECTORY + RugbyUtil.CONFIGURATIONS_DIRECTORY + 
+	    					RugbyUtil.OUTPUT_XML));
+	            }
 		}
 		
 		model.addAttribute("session_configurations",session_configurations);
@@ -387,6 +397,8 @@ public class IndexController
 					throws JAXBException, IllegalAccessException, InvocationTargetException, IOException, NumberFormatException, InterruptedException, 
 						CsvException, SAXException, ParserConfigurationException
 	{	
+		System.out.println("whatToProcess  "+whatToProcess);
+		System.out.println("valueToProcess  "+valueToProcess);
 		Event this_event = new Event();
 		if(!whatToProcess.equalsIgnoreCase(RugbyUtil.LOAD_TEAMS)) {
 			if(valueToProcess.contains(",")) {
@@ -584,11 +596,11 @@ public class IndexController
 					session_match.setMatchStats(new ArrayList<MatchStats>());
 				if(session_match.getEvents() == null || session_match.getEvents().size() <= 0) 
 					session_match.setEvents(new ArrayList<Event>());
-				
+				int score=0;
 				switch (valueToProcess.split(",")[1].toUpperCase()) {
-				case RugbyUtil.GOAL: case RugbyUtil.OWN_GOAL: case RugbyUtil.PENALTY: case RugbyUtil.YELLOW: case RugbyUtil.RED:
-				case RugbyUtil.SHOTS_ON_TARGET: case RugbyUtil.SHOTS: case RugbyUtil.CORNERS_CONVERTED: case RugbyUtil.CORNERS:
-				case RugbyUtil.ASSISTS: case RugbyUtil.OFF_SIDE: case RugbyUtil.FOULS:
+			    case RugbyUtil.PENALTY: case RugbyUtil.YELLOW: case RugbyUtil.RED:case RugbyUtil.TRY:case RugbyUtil.DROP_GOAL: case RugbyUtil.CONVERSION:
+				case RugbyUtil.ASSISTS: case RugbyUtil.SHOTS: case RugbyUtil.SHOTS_ON_TARGET: case RugbyUtil.OFF_SIDE: case RugbyUtil.FOULS:
+				case RugbyUtil.CORNERS_CONVERTED: case RugbyUtil.CORNERS: case RugbyUtil.SAVES:
 					
 					session_match.getMatchStats().add(new MatchStats(session_match.getMatchStats().size() + 1, Integer.valueOf(valueToProcess.split(",")[2]), 
 							session_match.getClock().getMatchHalves(),valueToProcess.split(",")[1], 1, (session_match.getClock().getMatchTotalMilliSeconds()/1000)));
@@ -596,11 +608,17 @@ public class IndexController
 					for(Player plyr : session_match.getHomeSquad()) {
 						if(plyr.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[2])) {
 							switch (valueToProcess.split(",")[1].toUpperCase()) {
-							case RugbyUtil.GOAL: case RugbyUtil.PENALTY:
-								session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 1);
+							case RugbyUtil.TRY: 
+								session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 5);
+								score+=5;
 								break;
-							case RugbyUtil.OWN_GOAL: 
-								session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 1);
+							case RugbyUtil.PENALTY: case RugbyUtil.DROP_GOAL:
+								session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 3);
+								score+=3;
+								break;
+							case RugbyUtil.CONVERSION:
+								session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 2);
+								score+=2;
 								break;
 							}
 						}
@@ -608,23 +626,29 @@ public class IndexController
 					for(Player plyr : session_match.getAwaySquad()) {
 						if(plyr.getPlayerId() == Integer.valueOf(valueToProcess.split(",")[2])) {
 							switch (valueToProcess.split(",")[1].toUpperCase()) {
-							case RugbyUtil.GOAL: case RugbyUtil.PENALTY:
-								session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 1);
+							case RugbyUtil.TRY: 
+								session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 5);
+								score+=5;
 								break;
-							case RugbyUtil.OWN_GOAL: 
-								session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 1);
+							case RugbyUtil.PENALTY: case RugbyUtil.DROP_GOAL:
+								session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 3);
+								score+=3;
+								break;
+							case RugbyUtil.CONVERSION:
+								session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 2);
+								score+=2;
 								break;
 							}
 						}
 					}
 					break;
 				}
-
+				session_match.getMatchStats().get(session_match.getMatchStats().size()-1).setStatsCount(score);
 				if(session_event.getEvents() == null || session_event.getEvents().size() <= 0) 
 					session_event.setEvents(new ArrayList<Event>());
 				
 				session_event.getEvents().add(new Event(session_event.getEvents().size() + 1, Integer.valueOf(valueToProcess.split(",")[2]), 
-						session_match.getClock().getMatchHalves(), session_match.getMatchStats().size(),whatToProcess, valueToProcess.split(",")[1], 0,0,1));
+						session_match.getClock().getMatchHalves(), session_match.getMatchStats().size(),whatToProcess, valueToProcess.split(",")[1], 0,0,score));
 				
 			}
 
@@ -773,8 +797,62 @@ public class IndexController
 				if(session_match.getMatchStats() != null) {
 					for(MatchStats ms : session_match.getMatchStats()) {
 						if(ms.getStatsId() == Integer.valueOf(valueToProcess.split(",")[1])) {
+							if(session_match.getHomeSquad().stream().filter(hm->hm.getPlayerId()
+										==Integer.valueOf(valueToProcess.split(",")[2])).findAny().orElse(null)!=null) {
+								
+								int score = ms.getStats_type().toUpperCase().contains(RugbyUtil.TRY) ? -5 :
+			                          (ms.getStats_type().toUpperCase().contains(RugbyUtil.PENALTY) || ms.getStats_type().toUpperCase().contains(RugbyUtil.DROP_GOAL)) ? -3 :
+			                          ms.getStats_type().toUpperCase().contains(RugbyUtil.CONVERSION) ? -2 : 0;
+									session_match.setHomeTeamScore(session_match.getHomeTeamScore() + score);
+				
+							    switch (valueToProcess.split(",")[3].toUpperCase()) {
+							        case RugbyUtil.TRY:
+							            session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 5);
+							            break;
+							        case RugbyUtil.PENALTY:
+							        case RugbyUtil.DROP_GOAL:
+							            session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 3);
+							            break;
+							        case RugbyUtil.CONVERSION:
+							            session_match.setHomeTeamScore(session_match.getHomeTeamScore() + 2);
+							            break;
+							    }
+							
+							}else {
+								
+								int score = ms.getStats_type().toUpperCase().contains(RugbyUtil.TRY) ? -5 :
+			                          (ms.getStats_type().toUpperCase().contains(RugbyUtil.PENALTY) || ms.getStats_type().toUpperCase()	.contains(RugbyUtil.DROP_GOAL)) ? -3 :
+			                          ms.getStats_type().toUpperCase().contains(RugbyUtil.CONVERSION) ? -2 : 0;
+								    
+									session_match.setAwayTeamScore(session_match.getAwayTeamScore() + score);
+					
+								    switch (valueToProcess.split(",")[3].toUpperCase()) {
+								        case RugbyUtil.TRY:
+								            session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 5);
+								            break;
+								        case RugbyUtil.PENALTY:
+								        case RugbyUtil.DROP_GOAL:
+								            session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 3);
+								            break;
+								        case RugbyUtil.CONVERSION:
+								            session_match.setAwayTeamScore(session_match.getAwayTeamScore() + 2);
+								            break;
+			    }
+							}
 							ms.setPlayerId(Integer.valueOf(valueToProcess.split(",")[2]));
 							ms.setStats_type(valueToProcess.split(",")[3]);
+							switch(valueToProcess.split(",")[3].toUpperCase()) {
+								case RugbyUtil.TRY: 
+									ms.setStatsCount(5);
+									break;
+								case RugbyUtil.PENALTY: case RugbyUtil.DROP_GOAL:
+									ms.setStatsCount(3);
+									break;
+								case RugbyUtil.CONVERSION:
+									ms.setStatsCount(2);
+									break;
+							}
+							
 							ms.setTotalMatchSeconds(Long.valueOf(valueToProcess.split(",")[4]));
 						}
 					}
@@ -785,6 +863,17 @@ public class IndexController
 							evnt.setEventPlayerId(Integer.valueOf(valueToProcess.split(",")[2]));
 							evnt.setEventLog("LOG_EVENT");
 							evnt.setEventType(valueToProcess.split(",")[3]);
+							switch(valueToProcess.split(",")[3].toUpperCase()) {
+							case RugbyUtil.TRY: 
+								evnt.setEventScore(5);
+								break;
+							case RugbyUtil.PENALTY: case RugbyUtil.DROP_GOAL:
+								evnt.setEventScore(3);
+								break;
+							case RugbyUtil.CONVERSION:
+								evnt.setEventScore(2);
+								break;
+						  }
 						}
 					}
 				}
@@ -929,16 +1018,20 @@ public class IndexController
 							case RugbyUtil.GOAL: case RugbyUtil.OWN_GOAL: case RugbyUtil.PENALTY: case RugbyUtil.YELLOW: case RugbyUtil.RED:
 							case RugbyUtil.ASSISTS: case RugbyUtil.SHOTS: case RugbyUtil.SHOTS_ON_TARGET: case RugbyUtil.OFF_SIDE: case RugbyUtil.FOULS:
 							case RugbyUtil.CORNERS_CONVERTED: case RugbyUtil.CORNERS: case RugbyUtil.SAVES:
+							case RugbyUtil.TRY: case RugbyUtil.CONVERSION:case RugbyUtil.DROP_GOAL:
 								this_event = session_event.getEvents().get(session_event.getEvents().size() - 1);
 								session_match.getMatchStats().remove(session_match.getMatchStats().get(session_match.getMatchStats().size() - 1));
 								for(Player plyr : session_match.getHomeSquad()) {
 									if(plyr.getPlayerId() == this_event.getEventPlayerId()) {
 										switch (this_event.getEventType().toUpperCase()) {
-										case RugbyUtil.GOAL: case RugbyUtil.PENALTY:
-											session_match.setHomeTeamScore(session_match.getHomeTeamScore() - 1);
+										case RugbyUtil.TRY: 
+											session_match.setHomeTeamScore(session_match.getHomeTeamScore() - 5 < 0 ? 0 : session_match.getHomeTeamScore() - 5);
 											break;
-										case RugbyUtil.OWN_GOAL: 
-											session_match.setAwayTeamScore(session_match.getAwayTeamScore() - 1);
+										case RugbyUtil.PENALTY: case RugbyUtil.DROP_GOAL:
+											session_match.setHomeTeamScore(session_match.getHomeTeamScore() - 3 < 0 ? 0 : session_match.getHomeTeamScore() - 3);
+											break;
+										case RugbyUtil.CONVERSION:
+											session_match.setHomeTeamScore(session_match.getHomeTeamScore() - 2 < 0 ? 0 : session_match.getHomeTeamScore() - 2);
 											break;
 										}
 									}
@@ -946,11 +1039,14 @@ public class IndexController
 								for(Player plyr : session_match.getAwaySquad()) {
 									if(plyr.getPlayerId() == this_event.getEventPlayerId()) {
 										switch (this_event.getEventType().toUpperCase()) {
-										case RugbyUtil.GOAL: case RugbyUtil.PENALTY:
-											session_match.setAwayTeamScore(session_match.getAwayTeamScore() - 1);
+										case RugbyUtil.TRY: 
+											session_match.setAwayTeamScore(session_match.getAwayTeamScore() - 5 < 0 ? 0 : session_match.getAwayTeamScore() - 5);
 											break;
-										case RugbyUtil.OWN_GOAL: 
-											session_match.setHomeTeamScore(session_match.getHomeTeamScore() - 1);
+										case RugbyUtil.PENALTY: case RugbyUtil.DROP_GOAL:
+											session_match.setAwayTeamScore(session_match.getAwayTeamScore() - 3 < 0 ? 0 : session_match.getAwayTeamScore() - 3);
+											break;
+										case RugbyUtil.CONVERSION:
+											session_match.setAwayTeamScore(session_match.getAwayTeamScore() - 2 < 0 ? 0 : session_match.getAwayTeamScore() - 2);
 											break;
 										}
 									}

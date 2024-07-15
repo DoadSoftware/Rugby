@@ -4104,18 +4104,23 @@ function addItemsToList(whatToProcess, dataToProcess)
 		select.id = 'overwrite_match_stats_type';
 	    
 	    option = document.createElement('option');
-		option.value = 'goal';
-	    option.text = 'Goal';
+		option.value = 'Try';
+	    option.text = 'Try';
 	    select.appendChild(option);
 	    
 	    option = document.createElement('option');
-		option.value = 'own_goal';
-	    option.text = 'Own Goal';
+		option.value = 'Penalty';
+	    option.text = 'Penalty';
 	    select.appendChild(option);
 		    
 		option = document.createElement('option');
-		option.value = 'penalty';
-	    option.text = 'Penalty';
+		option.value = 'Conversion';
+	    option.text = 'Conversion';
+	    select.appendChild(option);
+	    
+	    option = document.createElement('option');
+		option.value = 'Drop_goal';
+	    option.text = 'Drop goal';
 	    select.appendChild(option);
 		
 		header_text = document.createElement('label');
@@ -4816,17 +4821,20 @@ function addItemsToList(whatToProcess, dataToProcess)
 							
 						case 'goal':
 						
-							for(var ibound=1; ibound<=3; ibound++) 
+							for(var ibound=1; ibound<=4; ibound++) 
 							{
 						    	anchor = document.createElement('a');
 							    anchor.className = 'btn btn-success';
 			
 							    if(ibound == 1) {
-								    anchor.id = 'goal';
-								    anchor.innerText = 'Goal';
+								    anchor.id = 'Try';
+								    anchor.innerText = 'Try';
 							    } else if(ibound == 2) {
-								    anchor.id = 'own_goal';
-								    anchor.innerText = 'Own goal';
+								    anchor.id = 'drop_goal';
+								    anchor.innerText = 'Drop goal';
+							    }else if(ibound == 3) {
+								    anchor.id = 'Conversion';
+								    anchor.innerText = 'Conversion';
 							    }else{
 									anchor.id = 'penalty';
 								    anchor.innerText = 'Penalty';
