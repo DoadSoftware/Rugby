@@ -109,6 +109,13 @@
 								</c:forEach>
 					      </select>
 					  </div>
+					   <div class="col-6 col-sm-3">
+					    <label for="squadPerTeam" class="col-form-label text-left">Squad</label>
+					      <select id="squadPerTeam" name="squadPerTeam" class="browser-default custom-select custom-select-sm">
+				      	  	<option value="7">7</option>
+				      	  	<option value="11">11</option>
+					      </select>
+					  </div>
 					</div>
 				  </div>
 			  	<table class="table table-striped table-bordered"> 

@@ -655,7 +655,7 @@ function processUserSelection(whichInput)
 	case 'matchFileName':
 		if(document.getElementById('matchFileName').value) {
 			document.getElementById('matchFileName').value = 
-				document.getElementById('matchFileName').value.replace('.xml','') + '.xml';
+				document.getElementById('matchFileName').value.replace('.json','') + '.json';
 		}
 		break;
 	case 'save_match_btn': case 'reset_match_btn':
@@ -674,9 +674,10 @@ function processUserSelection(whichInput)
 			alert('Both teams cannot be same. Please choose different home and away team');
 			return false;
 		}
+		let squad = parseInt($('#squadPerTeam option:selected').val());
 		for(var tm=1;tm<=2;tm++) {
-			for(var i=1;i<11;i++) {
-				for(var j=i+1;j<=11;j++) {
+			for(var i=1;i<squad;i++) {
+				for(var j=i+1;j<=squad;j++) {
 					if(tm == 1) {
 						if(document.getElementById('homePlayer_' + i).selectedIndex == document.getElementById('homePlayer_' + j).selectedIndex) {
 							alert(document.getElementById('homePlayer_' + i).options[
@@ -1875,6 +1876,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 	var max_cols,div,linkDiv,anchor,row,cell,header_text,select,option,tr,th,thead,text,table,tbody,playerName,api_value_home,api_value_away;
 	var cellCount = 0;
 	var addSelect = false;
+	var squad =0;
 	
 	switch (whatToProcess) {
 	case 'POPULATE-PLAYER':
@@ -4213,9 +4215,10 @@ function addItemsToList(whatToProcess, dataToProcess)
 			table.appendChild(thead);
 
 			tbody = document.createElement('tbody');
-			max_cols = parseInt(10 + parseInt($('#homeSubstitutesPerTeam option:selected').val()));
+			squad = parseInt($('#squadPerTeam option:selected').val());
+			max_cols = parseInt(squad + parseInt($('#homeSubstitutesPerTeam option:selected').val()));
 			if(parseInt($('#homeSubstitutesPerTeam option:selected').val()) < parseInt($('#awaySubstitutesPerTeam option:selected').val())) {
-				max_cols = parseInt(10 + parseInt($('#awaySubstitutesPerTeam option:selected').val()));
+				max_cols = parseInt(squad + parseInt($('#awaySubstitutesPerTeam option:selected').val()));
 			}
 
 			for(var i=0; i <= max_cols; i++) {
@@ -4224,12 +4227,12 @@ function addItemsToList(whatToProcess, dataToProcess)
 					addSelect = false;
 					switch(j) {
 					case 0: case 1:
-						if(i <= parseInt(10 + parseInt($('#homeSubstitutesPerTeam option:selected').val()))) {
+						if(i <= parseInt(squad + parseInt($('#homeSubstitutesPerTeam option:selected').val()))) {
 							addSelect = true;
 						}
 						break;
 					case 2: case 3:
-						if(i <= parseInt(10 + parseInt($('#awaySubstitutesPerTeam option:selected').val()))) {
+						if(i <= parseInt(squad + parseInt($('#awaySubstitutesPerTeam option:selected').val()))) {
 							addSelect = true;
 						}
 						break;
@@ -4322,7 +4325,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 								}
 							    select.appendChild(option);
 							}
-							if(i <= 10) {
+							if(i <= squad) {
 								switch(j) {
 								case 1: 
 									select.value = dataToProcess.homeSquad[i].captainGoalKeeper;
@@ -4332,17 +4335,17 @@ function addItemsToList(whatToProcess, dataToProcess)
 									break;
 								}
 							}
-							if(i > 10 && (i-11) <= dataToProcess.homeSubstitutes.length -1){
+							if(i > squad && (squad) <= dataToProcess.homeSubstitutes.length -1){
 								switch(j) {
 								case 1:
-									select.value = dataToProcess.homeSubstitutes[i-11].captainGoalKeeper;
+									select.value = dataToProcess.homeSubstitutes[squad].captainGoalKeeper;
 									break;
 								}
 							}
-							if(i > 10 && (i-11) <= dataToProcess.awaySubstitutes.length -1){
+							if(i > squad && squad <= dataToProcess.awaySubstitutes.length -1){
 								switch(j) {
 								case 3:
-									select.value = dataToProcess.awaySubstitutes[i-11].captainGoalKeeper;
+									select.value = dataToProcess.awaySubstitutes[squad].captainGoalKeeper;
 									break;
 								}
 							}
@@ -4962,7 +4965,7 @@ function addItemsToList(whatToProcess, dataToProcess)
 				case 0:
 				    th.innerHTML = dataToProcess.homeTeam.teamName1 + ': ' + dataToProcess.homeTeamScore ;
 					break;
-				case 1:
+				case 2:
 					th.innerHTML = dataToProcess.awayTeam.teamName1 + ': ' + dataToProcess.awayTeamScore ;
 					break;
 				}
